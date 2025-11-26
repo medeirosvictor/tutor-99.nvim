@@ -45,7 +45,6 @@ function Request.new(opts)
 	local scopes = ts.function_scopes(cursor)
 	local buffer = vim.api.nvim_get_current_buf()
 
-    print("request", vim.inspect(cursor), vim.inspect(scopes))
     return setmetatable({
         cursor = cursor,
         scopes = scopes,
@@ -91,10 +90,12 @@ function Request:_update_file_with_changes(res)
 	local mark_point = Point:new(mark_pos[1], mark_pos[2] + 1)
 
 	local ts = editor.treesitter
-	local scopes = ts.function_scopes(mark_point)
+	local scopes = ts.function_scopes(mark_point, self.buffer)
+    print("update_file_with_changes buffer", self.buffer)
 
 	if not scopes or not scopes:has_scope() then
 		Logger:error("update_file_with_changes: unable to find function at mark location")
+        error("update_file_with_changes: funable to find function at mark location")
 		return
 	end
 
@@ -105,6 +106,14 @@ function Request:_update_file_with_changes(res)
 
 	local lines = vim.split(res, "\n")
 	vim.api.nvim_buf_set_lines(self.buffer, function_start_row, function_end_row + 1, false, lines)
+
+    local stuff = {
+        buffer = self.buffer,
+        f_start = function_start_row,
+        f_end = function_end_row,
+        res = res
+    }
+    print("setting lines in buffer", vim.inspect(stuff))
 end
 
 function Request:start()
@@ -130,6 +139,7 @@ function Request:start()
 			if ok then
 				self:_update_file_with_changes(res)
 			end
+            print("finished")
 		end)
 	end)
 end

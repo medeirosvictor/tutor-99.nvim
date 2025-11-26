@@ -14,9 +14,9 @@ local M = {}
 local function_query = "99-function"
 local imports_query = "99-imports"
 
-local function tree_root()
-	local buffer = vim.api.nvim_get_current_buf()
-	local lang = vim.bo.ft
+--- @param buffer number
+---@param lang string
+local function tree_root(buffer, lang)
 
 	-- Load the parser and the query.
 	local ok, parser = pcall(vim.treesitter.get_parser, buffer, lang)
@@ -72,23 +72,25 @@ function Scope:finalize()
 end
 
 --- @param cursor Point
+--- @param buffer number?
 --- @return Scope | nil
-function M.function_scopes(cursor)
-	local lang = vim.bo.ft
-	local root = tree_root()
+function M.function_scopes(cursor, buffer)
+    buffer = buffer or vim.api.nvim_get_current_buf()
+
+	local lang = vim.bo[buffer].ft
+	local root = tree_root(buffer, lang)
 	if not root then
 		Logger:debug("LSP: could not find tree root")
 		return nil
 	end
 
-	local buffer = vim.api.nvim_get_current_buf()
 	local ok, query = pcall(vim.treesitter.query.get, lang, function_query)
-
 	if not ok or query == nil then
 		Logger:debug("LSP: not ok or query", "query", vim.inspect(query), "lang", lang, "ok", vim.inspect(ok))
 		return nil
 	end
 
+    print("function_scopes", buffer)
 	local scope = Scope:new(cursor, buffer)
 	for _, match, _ in query:iter_matches(root, buffer, 0, -1, { all = true }) do
 		for _, nodes in pairs(match) do
