@@ -206,7 +206,6 @@ end
 function M.display_centered_message(message)
     M.clear_active_popups()
     local config = create_centered_window()
-    print(vim.inspect(config))
     local window = create_floating_window(config)
     local display_lines = ensure_no_new_lines(message)
 
