@@ -26,6 +26,30 @@ describe("Mark", function()
     test_utils.clean_files()
   end)
 
+  it("should get mark point from visual selection", function()
+    local _, buf = test_utils.fif_setup({
+      "local test_1 = 0",
+      "local test_2 = 0",
+      "local test_3 = 0",
+      "local test_4 = 0",
+      "local test_5 = 0",
+      "local test_6 = 0",
+    }, 2, 0, "lua")
+
+    vim.api.nvim_feedkeys("V", "x", false)
+
+    test_utils.next_frame()
+    vim.api.nvim_feedkeys(
+      vim.api.nvim_replace_termcodes("<Esc>", true, false, true),
+      "x",
+      false
+    )
+
+    local range = Range.from_visual_selection()
+    local mark = Mark.mark_point(buf, range.end_)
+    eq(Point.from_mark(mark), Point:from_1_based(2, 17))
+  end)
+
   it("should create a mark at a specific point", function()
     local point = Point:from_1_based(2, 3)
     local mark = Mark.mark_point(buffer, point)

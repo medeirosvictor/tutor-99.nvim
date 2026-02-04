@@ -1,4 +1,4 @@
---- TODO: rewrite : functions to . functions where they dont reference
+--- TODO: rewrite : functions to . functions where they dont referencegeo
 --- self.
 ---
 local project_row = 100000000
@@ -263,7 +263,8 @@ function Range.from_visual_selection()
     --- we need to capture the whole line, therefore its end of line + 1
     end_col = end_col
   else
-    end_col = #end_line[1] + 1
+    --- we are using zero based point, which means length of line includes the new_line character
+    end_col = #end_line[1]
   end
 
   local actual_end = Point.from_0_based(end_row, end_col)
