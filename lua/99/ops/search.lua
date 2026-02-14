@@ -69,7 +69,7 @@ local function search(context, opts)
     request:cancel()
   end)
 
-  local prompt, rules =
+  local prompt, rules, refs =
     make_prompt(context, context._99.prompts.prompts.semantic_search(), opts)
 
   context:add_agent_rules(rules)

@@ -3,7 +3,7 @@ local RequestStatus = require("99.ops.request_status")
 local Mark = require("99.ops.marks")
 local geo = require("99.geo")
 local make_clean_up = require("99.ops.clean-up")
-local Completions = require("99.extensions.completions")
+local make_prompt = require("99.ops.make-prompt")
 
 local Range = geo.Range
 local Point = geo.Point
@@ -44,22 +44,13 @@ local function over_range(context, range, opts)
     request:cancel()
   end)
 
-  local full_prompt = context._99.prompts.prompts.visual_selection(range)
-  local additional_prompt = opts.additional_prompt
-  if additional_prompt then
-    full_prompt =
-      context._99.prompts.prompts.prompt(additional_prompt, full_prompt)
+  local system_cmd = context._99.prompts.prompts.visual_selection(range)
+  local prompt, rules, refs = make_prompt(context, system_cmd, opts)
 
-    local refs = Completions.parse(additional_prompt)
-    context:add_references(refs)
-  end
+  context:add_agent_rules(rules)
+  request:add_prompt_content(prompt)
+  context:add_references(refs)
 
-  local additional_rules = opts.additional_rules
-  if additional_rules then
-    context:add_agent_rules(additional_rules)
-  end
-
-  request:add_prompt_content(full_prompt)
   top_status:start()
   bottom_status:start()
   request:start({
