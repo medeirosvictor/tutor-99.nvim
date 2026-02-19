@@ -1,5 +1,5 @@
---- @alias _99.Request.State "ready" | "calling-model" | "parsing-result" | "updating-file" | "cancelled"
 --- @alias _99.Request.ResponseState "failed" | "success" | "cancelled"
+--- @alias _99.Request.State "ready" | "requesting" | _99.Request.ResponseState
 
 local Providers = require("99.providers")
 
@@ -47,15 +47,21 @@ function Request:_set_process(proc)
 end
 
 function Request:cancel()
+  if self.state == "success" or self.state == "failed" then
+    return
+  end
+
   self.logger:debug("cancel")
   self.state = "cancelled"
+  local proc = self._proc
   ---@diagnostic disable-next-line: undefined-field
-  if self._proc and self._proc.pid then
+  if proc and proc.pid then
+    self._proc = nil
     pcall(function()
       local sigterm = (vim.uv and vim.uv.constants and vim.uv.constants.SIGTERM)
         or 15
       ---@diagnostic disable-next-line: undefined-field
-      self._proc:kill(sigterm)
+      proc:kill(sigterm)
     end)
   end
 end
@@ -71,18 +77,62 @@ function Request:add_prompt_content(content)
   return self
 end
 
+--- @param r _99.Request
+--- @param obs _99.Providers.Observer | nil
+local function observer_from_request(r, obs)
+  local context = r.context
+  return {
+    on_start = function()
+      r.state = "requesting"
+      context._99:track_request(context)
+      if obs then
+        obs.on_start()
+      end
+    end,
+    on_complete = function(status, res)
+      r.state = status
+      context._99:finish_request(context, status)
+      if obs then
+        obs.on_complete(status, res)
+      end
+    end,
+    on_stderr = function(line)
+      if obs then
+        obs.on_stderr(line)
+      end
+    end,
+    on_stdout = function(line)
+      if obs then
+        obs.on_stdout(line)
+      end
+    end,
+  }
+end
+
 --- @param observer _99.Providers.Observer?
 function Request:start(observer)
-  self.context._99:track_request(self.context)
-  self.context:finalize()
+  self.logger:assert(
+    self.state == "ready",
+    "request is not in state ready when attempting to start a request"
+  )
+  local ok = self.context:finalize()
+  self.logger:assert(
+    ok,
+    "request has failed due to context finalization: check logs for more details"
+  )
+
   for _, content in ipairs(self.context.ai_context) do
     self:add_prompt_content(content)
   end
-
   local prompt = table.concat(self._content, "\n")
+
   self.context:save_prompt(prompt)
   self.logger:debug("start", "prompt", prompt)
-  self.provider:make_request(prompt, self, observer)
+  self.provider:make_request(
+    prompt,
+    self,
+    observer_from_request(self, observer)
+  )
 end
 
 return Request

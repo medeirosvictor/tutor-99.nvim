@@ -27,6 +27,10 @@ local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 --- @field win_id number
 --- @field buf_id number
 
+--- @class _99.window.SplitWindow
+--- @field win number
+--- @field buffer number
+
 --- @param lines string[]
 --- @return string[]
 local function ensure_no_new_lines(lines)
@@ -279,9 +283,13 @@ local function set_defaul_win_options(win, name)
 end
 
 --- @param win _99.window.Window
---- @param rules _99.Agents.Rules
+--- @param rules _99.Agents.Rules?
 --- @param group any
 local function highlight_rules_found(win, rules, group)
+  if rules == nil then
+    return
+  end
+
   local rule_nsid = vim.api.nvim_create_namespace("99.window.rules")
   local function check_and_highlight_rules()
     if not nvim_win_is_valid(win.win_id) then
@@ -347,7 +355,8 @@ end
 --- @class _99.window.CaptureInputOpts
 --- @field cb fun(success: boolean, result: string): nil
 --- @field on_load? fun(): nil
---- @field rules _99.Agents.Rules
+--- @field content? string[]
+--- @field rules? _99.Agents.Rules
 
 --- @param name string
 --- @param opts _99.window.CaptureInputOpts
@@ -423,6 +432,16 @@ function M.capture_input(name, opts)
   if opts.on_load then
     vim.schedule(opts.on_load)
   end
+
+  if opts.content then
+    vim.api.nvim_buf_set_lines(
+      win.buf_id,
+      0,
+      -1,
+      false,
+      ensure_no_new_lines(opts.content)
+    )
+  end
 end
 
 function M.clear_active_popups()
@@ -492,5 +511,55 @@ function M.close(win)
       break
     end
   end
+end
+
+--- @class _99.window.SplitWindowOpts
+--- @field split_direction "vertical" | "horizontal" | nil
+--- @field filetype string
+
+--- @param content string[]
+---@param buffer number | nil
+---@param opts _99.window.SplitWindowOpts | nil
+--- @return _99.window.SplitWindow
+function M.create_split(content, buffer, opts)
+  opts = opts or { split_direction = "vertical" }
+
+  opts.split_direction = opts.split_direction or "vertical"
+  opts.filetype = opts.filetype or "markdown"
+
+  local split_direction = opts.split_direction
+  assert(
+    split_direction == "vertical" or split_direction == "horizontal",
+    "unknown split direction: "
+      .. vim.inspect(split_direction)
+      .. " : must be horizontal or vertical"
+  )
+
+  if split_direction == "horizontal" then
+    vim.cmd("split")
+  else
+    vim.cmd("vsplit")
+  end
+
+  local win_id = vim.api.nvim_get_current_win()
+  local buf_id = buffer
+  if not buf_id or not nvim_buf_is_valid(buf_id) then
+    buf_id = vim.api.nvim_create_buf(false, false)
+    vim.api.nvim_buf_set_lines(
+      buf_id,
+      0,
+      -1,
+      false,
+      ensure_no_new_lines(content)
+    )
+  end
+
+  vim.api.nvim_win_set_buf(win_id, buf_id)
+  vim.bo[buf_id].filetype = opts.filetype
+
+  return {
+    win = win_id,
+    buffer = buf_id,
+  }
 end
 return M

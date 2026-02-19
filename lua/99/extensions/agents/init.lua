@@ -1,5 +1,4 @@
 local helpers = require("99.extensions.agents.helpers")
-local Logger = require("99.logger.logger")
 local M = {}
 
 --- @class _99.Agents.Rule
@@ -110,6 +109,23 @@ function M.by_name(rules, prompt)
   }
 end
 
+--- @param rule _99.Agents.Rule
+--- @return string | nil
+function M.get_rule_content(rule)
+  local file_path = rule.absolute_path or rule.path
+  local ok, file = pcall(io.open, file_path, "r")
+  if not ok or not file then
+    return nil
+  end
+  local ok_read, content = pcall(file.read, file, "*a")
+  if not ok_read then
+    return nil
+  end
+
+  pcall(file.close, file)
+  return string.format("<%s>\n%s\n</%s>", rule.name, content, rule.name)
+end
+
 --- @param _99 _99.State
 --- @return _99.CompletionProvider
 function M.completion_provider(_99)
@@ -140,14 +156,7 @@ function M.completion_provider(_99)
       if not rule then
         return nil
       end
-      local file_path = rule.absolute_path or rule.path
-      local ok, file = pcall(io.open, file_path, "r")
-      if not ok or not file then
-        return nil
-      end
-      local content = file:read("*a")
-      file:close()
-      return string.format("<%s>\n%s\n</%s>", rule.name, content, rule.name)
+      return M.get_rule_content(rule)
     end,
   }
 end

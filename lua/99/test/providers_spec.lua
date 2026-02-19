@@ -66,6 +66,27 @@ describe("providers", function()
     end)
   end)
 
+  describe("GeminiCLIProvider", function()
+    it("builds correct command with model", function()
+      local request = { context = { model = "gemini-2.5-pro" } }
+      local cmd =
+        Providers.GeminiCLIProvider._build_command(nil, "test query", request)
+      eq({
+        "gemini",
+        "--approval-mode",
+        "auto_edit",
+        "--model",
+        "gemini-2.5-pro",
+        "--prompt",
+        "test query",
+      }, cmd)
+    end)
+
+    it("has correct default model", function()
+      eq("auto", Providers.GeminiCLIProvider._get_default_model())
+    end)
+  end)
+
   describe("provider integration", function()
     it("can be set as provider override", function()
       local _99 = require("99")
@@ -108,6 +129,17 @@ describe("providers", function()
       end
     )
 
+    it(
+      "uses GeminiCLIProvider default model when provider specified but no model",
+      function()
+        local _99 = require("99")
+
+        _99.setup({ provider = Providers.GeminiCLIProvider })
+        local state = _99.__get_state()
+        eq("auto", state.model)
+      end
+    )
+
     it("uses custom model when both provider and model specified", function()
       local _99 = require("99")
 
@@ -125,6 +157,7 @@ describe("providers", function()
       eq("function", type(Providers.OpenCodeProvider.make_request))
       eq("function", type(Providers.ClaudeCodeProvider.make_request))
       eq("function", type(Providers.CursorAgentProvider.make_request))
+      eq("function", type(Providers.GeminiCLIProvider.make_request))
     end)
   end)
 end)

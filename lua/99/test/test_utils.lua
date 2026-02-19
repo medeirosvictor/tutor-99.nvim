@@ -1,6 +1,14 @@
 local Levels = require("99.logger.level")
 local M = {}
 
+--- @type _99.Providers.Observer
+local DevNullObserver = {
+  on_start = function() end,
+  on_complete = function() end,
+  on_stderr = function() end,
+  on_stdout = function() end,
+}
+
 function M.next_frame()
   local next = false
   vim.schedule(function()
@@ -17,7 +25,7 @@ M.created_files = {}
 --- @class _99.test.ProviderRequest
 --- @field query string
 --- @field request _99.Request
---- @field observer _99.Providers.Observer?
+--- @field observer _99.Providers.Observer
 --- @field logger _99.Logger
 
 --- @class _99.test.Provider : _99.Providers.BaseProvider
@@ -35,6 +43,10 @@ end
 function TestProvider:make_request(query, request, observer)
   local logger = request.context.logger:set_area("TestProvider")
   logger:debug("make_request", "tmp_file", request.context.tmp_file)
+
+  observer = observer or DevNullObserver
+  observer.on_start()
+
   self.request = {
     query = query,
     request = request,
@@ -47,34 +59,26 @@ end
 --- @param result string
 function TestProvider:resolve(status, result)
   assert(self.request, "you cannot call resolve until make_request is called")
-  local obs = self.request.observer
-  if obs then
-    --- to match the behavior expected from the OpenCodeProvider
-    if self.request.request:is_cancelled() then
-      obs.on_complete("cancelled", result)
-    else
-      obs.on_complete(status, result)
-    end
+
+  if self.request.request:is_cancelled() then
+    self.request.observer.on_complete("cancelled", result)
+  else
+    self.request.observer.on_complete(status, result)
   end
+
   self.request = nil
 end
 
 --- @param line string
 function TestProvider:stdout(line)
   assert(self.request, "you cannot call stdout until make_request is called")
-  local obs = self.request.observer
-  if obs then
-    obs.on_stdout(line)
-  end
+  self.request.observer.on_stdout(line)
 end
 
 --- @param line string
 function TestProvider:stderr(line)
   assert(self.request, "you cannot call stderr until make_request is called")
-  local obs = self.request.observer
-  if obs then
-    obs.on_stderr(line)
-  end
+  self.request.observer.on_stderr(line)
 end
 
 M.TestProvider = TestProvider
@@ -109,7 +113,7 @@ end
 --- @param col number
 --- @param lang string?
 --- @return _99.test.Provider, number
-function M.fif_setup(content, row, col, lang)
+function M.test_setup(content, row, col, lang)
   assert(lang, "lang must be provided")
   local provider = M.TestProvider.new()
   require("99").setup({

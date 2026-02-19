@@ -51,7 +51,11 @@ describe("visual", function()
 
     local context =
       require("99.request-context").from_current_buffer(state, 100)
-    visual_fn(context, range)
+    context.operation = "test_op"
+
+    visual_fn(context, range, {
+      additional_prompt = "test prompt",
+    })
 
     eq(1, state:active_request_count())
     eq(content, r(buffer))
@@ -82,7 +86,10 @@ describe("visual", function()
 
     local context =
       require("99.request-context").from_current_buffer(state, 200)
-    visual_fn(context, range)
+    context.operation = "test_op"
+    visual_fn(context, range, {
+      additional_prompt = "test prompt",
+    })
 
     eq(1, state:active_request_count())
     eq(multi_line_content, r(buffer))
@@ -107,8 +114,11 @@ describe("visual", function()
     local state = _99.__get_state()
     local context =
       require("99.request-context").from_current_buffer(state, 300)
+    context.operation = "test_op"
 
-    visual_fn(context, range)
+    visual_fn(context, range, {
+      additional_prompt = "test prompt",
+    })
 
     eq(content, r(buffer))
 
@@ -134,8 +144,11 @@ describe("visual", function()
     local state = _99.__get_state()
     local context =
       require("99.request-context").from_current_buffer(state, 400)
+    context.operation = "test_op"
 
-    visual_fn(context, range)
+    visual_fn(context, range, {
+      additional_prompt = "test prompt",
+    })
 
     eq(content, r(buffer))
 
@@ -152,8 +165,11 @@ describe("visual", function()
     local state = _99.__get_state()
     local context =
       require("99.request-context").from_current_buffer(state, 500)
+    context.operation = "test_op"
 
-    visual_fn(context, range)
+    visual_fn(context, range, {
+      additional_prompt = "test prompt",
+    })
 
     eq(content, r(buffer))
 

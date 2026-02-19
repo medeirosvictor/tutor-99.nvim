@@ -27,7 +27,7 @@ describe("Mark", function()
   end)
 
   it("should get mark point from visual selection", function()
-    local _, buf = test_utils.fif_setup({
+    local _, buf = test_utils.test_setup({
       "local test_1 = 0",
       "local test_2 = 0",
       "local test_3 = 0",

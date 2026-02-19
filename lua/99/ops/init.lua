@@ -8,6 +8,6 @@
 
 return {
   search = require("99.ops.search"),
-  implement_fn = require("99.ops.implement-fn"),
+  tutorial = require("99.ops.tutorial"),
   over_range = require("99.ops.over-range"),
 }

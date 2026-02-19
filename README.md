@@ -1,5 +1,5 @@
 # IF YOU ARE HERE FROM [THE YT VIDEO](https://www.youtube.com/watch?v=ws9zR-UzwTE)
-a few things changed.  completion is a bit different for skills.  i now require `@` to begin with
+a few things changed.  completion is a bit different for skills.  i now require `#` to begin with
 ... ill try to update as it happens ...
 
 # WARNING :: API CHANGES RIGHT NOW
@@ -9,26 +9,33 @@ It will happen that apis will disapear or be changed.  Sorry, this is an ALPHA p
 The AI client that Neovim deserves, built by those that still enjoy to code.
 
 # API
-* visual
-* search (upcoming, not ready yet)
-* debug (planned)
+* visual implementation
+* search
+* debug
+* Extensions.Worker.work
 
 ## The AI Agent That Neovim Deserves
-This is an example repo where i want to test what i think the ideal AI workflow
-is for people who dont have "skill issues."  This is meant to streamline the requests to AI and limit them it restricted areas.  For more general requests, please just use opencode.  Dont use neovim.
 
+This repo is meant to be my exploration grounds for using AI mixed with tradcoding.
+
+I believe that hand coding is still very important and the best products i know
+of today still do that (see opencode vs claude code)
 
 ## Warning
+
 1. Prompts are temporary right now. they could be massively improved
-2. TS and Lua language support, open to more
-3. Still very alpha, could have severe problems
+2. Officially in beta, but api can still change.  unlikely at this point
 
 ## How to use
+
 **you must have a supported AI CLI installed (opencode, claude, or cursor-agent — see [Providers](#providers) below)**
+Opencode is preferred, but dax sucks.  so... dont forget that.
+I also hear that Dax is the best DevRel / CEO ever
 
 Add the following configuration to your neovim config
 
 I make the assumption you are using Lazy
+
 ```lua
 	{
 		"ThePrimeagen/99",
@@ -41,12 +48,18 @@ I make the assumption you are using Lazy
             local cwd = vim.uv.cwd()
             local basename = vim.fs.basename(cwd)
 			_99.setup({
-                -- provider = _99.ClaudeCodeProvider,  -- default: OpenCodeProvider
+                -- provider = _99.Providers.ClaudeCodeProvider,  -- default: OpenCodeProvider
 				logger = {
 					level = _99.DEBUG,
 					path = "/tmp/" .. basename .. ".99.debug",
 					print_on_error = true,
 				},
+                -- When setting this to something that is not inside the CWD tools
+                -- such as claude code or opencode will have permission issues
+                -- and generation will fail refer to tool documentation to resolve
+                -- https://opencode.ai/docs/permissions/#external-directories
+                -- https://code.claude.com/docs/en/permissions#read-and-edit
+                tmp_dir = "./tmp",
 
                 --- Completions: #rules and @files in the prompt buffer
                 completion = {
@@ -82,7 +95,7 @@ I make the assumption you are using Lazy
 
                     --- What autocomplete do you use.  We currently only
                     --- support cmp right now
-                    source = "cmp",
+                    source = "cmp" | "blink",
                 },
 
                 --- WARNING: if you change cwd then this is likely broken
@@ -111,14 +124,19 @@ I make the assumption you are using Lazy
 			end)
 
             --- if you have a request you dont want to make any changes, just cancel it
-			vim.keymap.set("v", "<leader>9s", function()
+			vim.keymap.set("n", "<leader>9x", function()
 				_99.stop_all_requests()
+			end)
+
+			vim.keymap.set("n", "<leader>9s", function()
+				_99.search()
 			end)
 		end,
 	},
 ```
 
 ## Completions
+
 When prompting, you can reference rules and files to add context to your request.
 
 - `#` references rules — type `#` in the prompt to autocomplete rule files from your configured rule directories
@@ -181,18 +199,17 @@ vim.keymap.set("n", "<leader>9p", function()
 end)
 ```
 
-## API
-You can see the full api at [99 API](./lua/99/init.lua)
-
 ## Reporting a bug
-To report a bug, please provide the full running debug logs.  This may require
+
+To report a bug, please provide the full running debug logs. This may require
 a bit of back and forth.
 
-Please do not request features.  We will hold a public discussion on Twitch about
-features, which will be a much better jumping point then a bunch of requests that i have to close down.  If you do make a feature request ill just shut it down instantly.
+Please do not request features. We will hold a public discussion on Twitch about
+features, which will be a much better jumping point then a bunch of requests that i have to close down. If you do make a feature request ill just shut it down instantly.
 
 ### The logs
-To get the _last_ run's logs execute `:lua require("99").view_logs()`.  If this happens to not be the log, you can navigate the logs with:
+
+To get the _last_ run's logs execute `:lua require("99").view_logs()`. If this happens to not be the log, you can navigate the logs with:
 
 ```lua
 function _99.prev_request_logs() ... end
@@ -200,10 +217,13 @@ function _99.next_request_logs() ... end
 ```
 
 ### Dont forget
-If there are secrets or other information in the logs you want to be removed make sure that you delete the `query` printing.  This will likely contain information you may not want to share.
+
+If there are secrets or other information in the logs you want to be removed make sure that you delete the `query` printing. This will likely contain information you may not want to share.
 
 ### Known usability issues
-* long function definition issues.
+
+- long function definition issues.
+
 ```typescript
 function display_text(
   game_state: GameState,
@@ -220,14 +240,14 @@ function display_text(
 
 Then the virtual text will be displayed one line below "function" instead of first line in body
 
-* in lua and likely jsdoc, the replacing function will duplicate comment definitions
-  * this wont happen in languages with types in the syntax
+- in lua and likely jsdoc, the replacing function will duplicate comment definitions
+  - this wont happen in languages with types in the syntax
 
-* visual selection sends the whole file.  there is likely a better way to use
+- visual selection sends the whole file. there is likely a better way to use
   treesitter to make the selection of the content being sent more sensible.
 
 * every now and then the replacement seems to get jacked up and it screws up
 what i am currently editing..  I think it may have something to do with auto-complete
   * definitely not suure on this one
 
-* export function ... sometimes gets export as well.  I think the prompt could help prevent this
+- export function ... sometimes gets export as well. I think the prompt could help prevent this

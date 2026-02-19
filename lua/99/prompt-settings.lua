@@ -8,12 +8,24 @@ end
 --- @class _99.Prompts.SpecificOperations
 --- @field visual_selection fun(range: _99.Range): string
 --- @field semantic_search fun(): string
+--- @field tutorial fun(): string
 --- @field prompt fun(prompt: string, action: string, name?: string): string
 --- @field role fun(): string
 --- @field read_tmp fun(): string
 local prompts = {
   role = function()
     return [[ You are a software engineering assistant mean to create robust and conanical code ]]
+  end,
+  tutorial = function()
+    return [[
+You are given a prompt and context and you must craft a tutorial.  If a set of
+context has links, read through them thoroughly and decide which ones to retrieve.
+Once you have fetched all the relavent content, review it thoroughly before
+crafting the tutorial
+
+<Rule>The response format must be valid Markdown</Rule>
+<Rule>The first line of the response must be the title of the tutorial</Rule>
+]]
   end,
   semantic_search = function()
     return [[
