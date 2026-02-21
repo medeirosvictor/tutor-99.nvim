@@ -93,8 +93,7 @@ I make the assumption you are using Lazy
                         -- exclude = { ".env", ".env.*", "node_modules", ".git", ... },
                     },
 
-                    --- What autocomplete do you use.  We currently only
-                    --- support cmp right now
+                    --- What autocomplete you use.
                     source = "cmp" | "blink",
                 },
 
