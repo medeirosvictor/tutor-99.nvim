@@ -24,7 +24,7 @@ M.created_files = {}
 
 --- @class _99.test.ProviderRequest
 --- @field query string
---- @field request _99.Request
+--- @field prompt _99.Prompt
 --- @field observer _99.Providers.Observer
 --- @field logger _99.Logger
 
@@ -38,29 +38,29 @@ function TestProvider.new()
 end
 
 --- @param query string
----@param request _99.Request
+---@param prompt _99.Prompt
 ---@param observer _99.Providers.Observer?
-function TestProvider:make_request(query, request, observer)
-  local logger = request.context.logger:set_area("TestProvider")
-  logger:debug("make_request", "tmp_file", request.context.tmp_file)
+function TestProvider:make_request(query, prompt, observer)
+  local logger = prompt.logger:set_area("TestProvider")
+  logger:debug("make_request", "tmp_file", prompt.tmp_file)
 
   observer = observer or DevNullObserver
   observer.on_start()
 
   self.request = {
     query = query,
-    request = request,
+    prompt = prompt,
     observer = observer,
     logger = logger,
   }
 end
 
---- @param status _99.Request.ResponseState
+--- @param status _99.Prompt.EndingState
 --- @param result string
 function TestProvider:resolve(status, result)
   assert(self.request, "you cannot call resolve until make_request is called")
 
-  if self.request.request:is_cancelled() then
+  if self.request.prompt:is_cancelled() then
     self.request.observer.on_complete("cancelled", result)
   else
     self.request.observer.on_complete(status, result)

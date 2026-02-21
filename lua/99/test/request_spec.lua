@@ -13,22 +13,18 @@ describe("request test", function()
   it("should replace visual selection with AI response", function()
     local p = test_utils.test_setup(content, 2, 1, "lua")
     local state = _99.__get_state()
-    local Request = require("99.request")
-    local RequestContext = require("99.request-context")
+    local Prompt = require("99.prompt")
 
-    local context = RequestContext.from_current_buffer(state, 100)
-    context.operation = "test_request"
+    local context = Prompt.visual(state)
     context:finalize()
-
-    local request = Request.new(context)
 
     local finished_called = false
     local finished_status = nil
 
-    eq("ready", request.state)
+    eq("ready", context.state)
 
     eq(0, state:active_request_count())
-    request:start({
+    context:start_request({
       on_start = function()
         print("on_start")
       end,
@@ -42,13 +38,13 @@ describe("request test", function()
     test_utils.next_frame()
     eq(1, state:active_request_count())
 
-    eq("requesting", request.state)
+    eq("requesting", context.state)
 
     p:resolve("success", "    return 'implemented!'")
     assert.is_true(finished_called)
 
     eq(0, state:active_request_count())
-    eq("success", request.state)
+    eq("success", context.state)
     eq("success", finished_status)
   end)
 end)

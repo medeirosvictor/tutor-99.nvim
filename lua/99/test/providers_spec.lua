@@ -5,7 +5,7 @@ local Providers = require("99.providers")
 describe("providers", function()
   describe("OpenCodeProvider", function()
     it("builds correct command with model", function()
-      local request = { context = { model = "anthropic/claude-sonnet-4-5" } }
+      local request = { model = "anthropic/claude-sonnet-4-5" }
       local cmd =
         Providers.OpenCodeProvider._build_command(nil, "test query", request)
       eq({
@@ -29,7 +29,7 @@ describe("providers", function()
 
   describe("ClaudeCodeProvider", function()
     it("builds correct command with model", function()
-      local request = { context = { model = "anthropic/claude-sonnet-4-5" } }
+      local request = { model = "anthropic/claude-sonnet-4-5" }
       local cmd =
         Providers.ClaudeCodeProvider._build_command(nil, "test query", request)
       eq({
@@ -49,7 +49,7 @@ describe("providers", function()
 
   describe("CursorAgentProvider", function()
     it("builds correct command with model", function()
-      local request = { context = { model = "anthropic/claude-sonnet-4-5" } }
+      local request = { model = "anthropic/claude-sonnet-4-5" }
       local cmd =
         Providers.CursorAgentProvider._build_command(nil, "test query", request)
       eq({
@@ -68,7 +68,7 @@ describe("providers", function()
 
   describe("GeminiCLIProvider", function()
     it("builds correct command with model", function()
-      local request = { context = { model = "gemini-2.5-pro" } }
+      local request = { model = "gemini-2.5-pro" }
       local cmd =
         Providers.GeminiCLIProvider._build_command(nil, "test query", request)
       eq({

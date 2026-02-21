@@ -37,15 +37,10 @@ local required_parsers = { 'lua', 'typescript' }
 local function missing_parsers(parsers)
   local missing = {}
   local buf = vim.api.nvim_create_buf(false, true)
-  print('[minimal.vim] Checking for missing parsers...')
   for _, lang in ipairs(parsers) do
-    print('[minimal.vim] Checking parser for: ' .. lang)
     local ok, err = pcall(vim.treesitter.get_parser, buf, lang)
     if not ok then
-      print('[minimal.vim] Parser NOT found for ' .. lang .. ': ' .. tostring(err))
       table.insert(missing, lang)
-    else
-      print('[minimal.vim] Parser FOUND for ' .. lang)
     end
   end
   vim.api.nvim_buf_delete(buf, { force = true })

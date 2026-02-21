@@ -49,9 +49,7 @@ describe("visual", function()
     local state = _99.__get_state()
     local visual_fn = require("99.ops.over-range")
 
-    local context =
-      require("99.request-context").from_current_buffer(state, 100)
-    context.operation = "test_op"
+    local context = require("99.prompt").visual(state)
 
     visual_fn(context, range, {
       additional_prompt = "test prompt",
@@ -84,9 +82,7 @@ describe("visual", function()
     local state = _99.__get_state()
     local visual_fn = require("99.ops.over-range")
 
-    local context =
-      require("99.request-context").from_current_buffer(state, 200)
-    context.operation = "test_op"
+    local context = require("99.prompt").visual(state)
     visual_fn(context, range, {
       additional_prompt = "test prompt",
     })
@@ -112,9 +108,7 @@ describe("visual", function()
     local p, buffer, range = setup(content, 2, 1, 2, 23)
     local visual_fn = require("99.ops.over-range")
     local state = _99.__get_state()
-    local context =
-      require("99.request-context").from_current_buffer(state, 300)
-    context.operation = "test_op"
+    local context = require("99.prompt").visual(state, 300)
 
     visual_fn(context, range, {
       additional_prompt = "test prompt",
@@ -122,14 +116,14 @@ describe("visual", function()
 
     eq(content, r(buffer))
 
-    assert.is_false(p.request.request:is_cancelled())
+    assert.is_false(p.request.prompt:is_cancelled())
     assert.is_not_nil(p.request)
-    assert.is_not_nil(p.request.request)
+    assert.is_not_nil(p.request.prompt)
 
     _99.stop_all_requests()
     test_utils.next_frame()
 
-    assert.is_true(p.request.request:is_cancelled())
+    assert.is_true(p.request.prompt:is_cancelled())
 
     p:resolve("success", "    return 'should not appear'")
     test_utils.next_frame()
@@ -142,9 +136,7 @@ describe("visual", function()
     local p, buffer, range = setup(content, 2, 1, 2, 23)
     local visual_fn = require("99.ops.over-range")
     local state = _99.__get_state()
-    local context =
-      require("99.request-context").from_current_buffer(state, 400)
-    context.operation = "test_op"
+    local context = require("99.prompt").visual(state)
 
     visual_fn(context, range, {
       additional_prompt = "test prompt",
@@ -163,9 +155,7 @@ describe("visual", function()
     local p, buffer, range = setup(content, 2, 1, 2, 23)
     local visual_fn = require("99.ops.over-range")
     local state = _99.__get_state()
-    local context =
-      require("99.request-context").from_current_buffer(state, 500)
-    context.operation = "test_op"
+    local context = require("99.prompt").visual(state)
 
     visual_fn(context, range, {
       additional_prompt = "test prompt",
@@ -174,7 +164,7 @@ describe("visual", function()
     eq(content, r(buffer))
 
     -- Manually cancel and resolve as cancelled
-    p.request.request:cancel()
+    p.request.prompt:cancel()
     p:resolve("cancelled", "Request was cancelled")
     test_utils.next_frame()
 

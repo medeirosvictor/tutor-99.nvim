@@ -1,7 +1,7 @@
 --- @class _99.Providers.Observer
 --- @field on_stdout fun(line: string): nil
 --- @field on_stderr fun(line: string): nil
---- @field on_complete fun(status: _99.Request.ResponseState, res: string): nil
+--- @field on_complete fun(status: _99.Prompt.EndingState, res: string): nil
 --- @field on_start fun(): nil
 
 --- @param fn fun(...: any): nil
@@ -18,7 +18,7 @@ local function once(fn)
 end
 
 --- @class _99.Providers.BaseProvider
---- @field _build_command fun(self: _99.Providers.BaseProvider, query: string, request: _99.Request): string[]
+--- @field _build_command fun(self: _99.Providers.BaseProvider, query: string, context: _99.Prompt): string[]
 --- @field _get_provider_name fun(self: _99.Providers.BaseProvider): string
 local BaseProvider = {}
 
@@ -27,10 +27,10 @@ function BaseProvider.fetch_models(callback)
   callback(nil, "This provider does not support listing models")
 end
 
---- @param request _99.Request
-function BaseProvider:_retrieve_response(request)
-  local logger = request.logger:set_area(self:_get_provider_name())
-  local tmp = request.context.tmp_file
+--- @param context _99.Prompt
+function BaseProvider:_retrieve_response(context)
+  local logger = context.logger:set_area(self:_get_provider_name())
+  local tmp = context.tmp_file
   local success, result = pcall(function()
     return vim.fn.readfile(tmp)
   end)
@@ -53,24 +53,23 @@ function BaseProvider:_retrieve_response(request)
 end
 
 --- @param query string
---- @param request _99.Request
+--- @param context _99.Prompt
 --- @param observer _99.Providers.Observer
-function BaseProvider:make_request(query, request, observer)
+function BaseProvider:make_request(query, context, observer)
   observer.on_start()
 
-  local logger = request.logger:set_area(self:_get_provider_name())
-  logger:debug("make_request", "tmp_file", request.context.tmp_file)
+  local logger = context.logger:set_area(self:_get_provider_name())
+  logger:debug("make_request", "tmp_file", context.tmp_file)
 
   local once_complete = once(
     --- @param status "success" | "failed" | "cancelled"
     ---@param text string
     function(status, text)
-      request.state = status
       observer.on_complete(status, text)
     end
   )
 
-  local command = self:_build_command(query, request)
+  local command = self:_build_command(query, context)
   logger:debug("make_request", "command", command)
 
   local proc = vim.system(
@@ -79,7 +78,7 @@ function BaseProvider:make_request(query, request, observer)
       text = true,
       stdout = vim.schedule_wrap(function(err, data)
         logger:debug("stdout", "data", data)
-        if request:is_cancelled() then
+        if context:is_cancelled() then
           once_complete("cancelled", "")
           return
         end
@@ -92,7 +91,7 @@ function BaseProvider:make_request(query, request, observer)
       end),
       stderr = vim.schedule_wrap(function(err, data)
         logger:debug("stderr", "data", data)
-        if request:is_cancelled() then
+        if context:is_cancelled() then
           once_complete("cancelled", "")
           return
         end
@@ -105,7 +104,7 @@ function BaseProvider:make_request(query, request, observer)
       end),
     },
     vim.schedule_wrap(function(obj)
-      if request:is_cancelled() then
+      if context:is_cancelled() then
         once_complete("cancelled", "")
         logger:debug("on_complete: request has been cancelled")
         return
@@ -121,7 +120,7 @@ function BaseProvider:make_request(query, request, observer)
         )
       else
         vim.schedule(function()
-          local ok, res = self:_retrieve_response(request)
+          local ok, res = self:_retrieve_response(context)
           if ok then
             once_complete("success", res)
           else
@@ -135,23 +134,23 @@ function BaseProvider:make_request(query, request, observer)
     end)
   )
 
-  request:_set_process(proc)
+  context:_set_process(proc)
 end
 
 --- @class OpenCodeProvider : _99.Providers.BaseProvider
 local OpenCodeProvider = setmetatable({}, { __index = BaseProvider })
 
 --- @param query string
---- @param request _99.Request
+--- @param context _99.Prompt
 --- @return string[]
-function OpenCodeProvider._build_command(_, query, request)
+function OpenCodeProvider._build_command(_, query, context)
   return {
     "opencode",
     "run",
     "--agent",
     "build",
     "-m",
-    request.context.model,
+    context.model,
     query,
   }
 end
@@ -183,14 +182,14 @@ end
 local ClaudeCodeProvider = setmetatable({}, { __index = BaseProvider })
 
 --- @param query string
---- @param request _99.Request
+--- @param context _99.Prompt
 --- @return string[]
-function ClaudeCodeProvider._build_command(_, query, request)
+function ClaudeCodeProvider._build_command(_, query, context)
   return {
     "claude",
     "--dangerously-skip-permissions",
     "--model",
-    request.context.model,
+    context.model,
     "--print",
     query,
   }
@@ -228,10 +227,10 @@ end
 local CursorAgentProvider = setmetatable({}, { __index = BaseProvider })
 
 --- @param query string
---- @param request _99.Request
+--- @param context _99.Prompt
 --- @return string[]
-function CursorAgentProvider._build_command(_, query, request)
-  return { "cursor-agent", "--model", request.context.model, "--print", query }
+function CursorAgentProvider._build_command(_, query, context)
+  return { "cursor-agent", "--model", context.model, "--print", query }
 end
 
 --- @return string
@@ -269,15 +268,15 @@ end
 local KiroProvider = setmetatable({}, { __index = BaseProvider })
 
 --- @param query string
---- @param request _99.Request
+--- @param context _99.Prompt
 --- @return string[]
-function KiroProvider._build_command(_, query, request)
+function KiroProvider._build_command(_, query, context)
   return {
     "kiro-cli",
     "chat",
     "--no-interactive",
     "--model",
-    request.context.model,
+    context.model,
     "--trust-all-tools",
     query,
   }
@@ -297,9 +296,9 @@ end
 local GeminiCLIProvider = setmetatable({}, { __index = BaseProvider })
 
 --- @param query string
---- @param request _99.Request
+--- @param context _99.Prompt
 --- @return string[]
-function GeminiCLIProvider._build_command(_, query, request)
+function GeminiCLIProvider._build_command(_, query, context)
   return {
     "gemini",
     "--approval-mode",
@@ -307,7 +306,7 @@ function GeminiCLIProvider._build_command(_, query, request)
     -- https://geminicli.com/docs/core/policy-engine/#default-policies
     "auto_edit",
     "--model",
-    request.context.model,
+    context.model,
     "--prompt",
     query,
   }

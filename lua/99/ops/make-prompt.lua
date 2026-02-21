@@ -1,7 +1,7 @@
 local Completions = require("99.extensions.completions")
 local Agents = require("99.extensions.agents")
 
---- @param context _99.RequestContext
+--- @param context _99.Prompt
 --- @param prompt string
 --- @param opts _99.ops.Opts
 --- @return string, _99.Reference[]

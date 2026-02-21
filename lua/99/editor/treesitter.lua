@@ -31,7 +31,7 @@ local function tree_root(buffer, lang)
   return tree:root()
 end
 
---- @param context _99.RequestContext
+--- @param context _99.Prompt
 --- @param cursor _99.Point
 --- @return _99.treesitter.TSNode | nil
 function M.fn_call(context, cursor)
@@ -103,7 +103,7 @@ end
 
 --- @param ts_node _99.treesitter.TSNode
 ---@param cursor _99.Point
----@param context _99.RequestContext
+---@param context _99.Prompt
 ---@return _99.treesitter.Function
 function Function.from_ts_node(ts_node, cursor, context)
   local ok, query =
@@ -138,7 +138,7 @@ function Function.from_ts_node(ts_node, cursor, context)
   return setmetatable(func, Function)
 end
 
---- @param context _99.RequestContext
+--- @param context _99.Prompt
 --- @param cursor _99.Point
 --- @return _99.treesitter.Function?
 function M.containing_function(context, cursor)

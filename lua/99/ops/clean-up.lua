@@ -1,6 +1,6 @@
 local M = {}
 
---- @alias _99.Providers.on_complete fun(status: _99.Request.ResponseState, response: string): nil
+--- @alias _99.Providers.on_complete fun(status: _99.Prompt.EndingState, response: string): nil
 --- @class _99.Providers.PartialObserver
 --- @field on_complete _99.Providers.on_complete
 --- @field on_stdout? fun(line: string): nil

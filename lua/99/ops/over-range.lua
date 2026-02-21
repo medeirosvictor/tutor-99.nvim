@@ -1,4 +1,3 @@
-local Request = require("99.request")
 local RequestStatus = require("99.ops.request_status")
 local Mark = require("99.ops.marks")
 local geo = require("99.geo")
@@ -11,18 +10,18 @@ local make_observer = CleanUp.make_observer
 local Range = geo.Range
 local Point = geo.Point
 
---- @param context _99.RequestContext
+--- @param context _99.Prompt
 --- @param range _99.Range
 --- @param opts? _99.ops.Opts
 local function over_range(context, range, opts)
   opts = opts or {}
   local logger = context.logger:set_area("visual")
 
-  local request = Request.new(context)
   local top_mark = Mark.mark_above_range(range)
   local bottom_mark = Mark.mark_point(range.buffer, range.end_)
   context.marks.top_mark = top_mark
   context.marks.bottom_mark = bottom_mark
+  context.data.range = range
 
   logger:debug(
     "visual request start",
@@ -44,19 +43,19 @@ local function over_range(context, range, opts)
     top_status:stop()
     bottom_status:stop()
     context:clear_marks()
-    request:cancel()
+    context:stop()
   end)
 
   local system_cmd = context._99.prompts.prompts.visual_selection(range)
   local prompt, refs = make_prompt(context, system_cmd, opts)
 
-  request:add_prompt_content(prompt)
+  context:add_prompt_content(prompt)
   context:add_references(refs)
   context:add_clean_up(clean_up)
 
   top_status:start()
   bottom_status:start()
-  request:start(make_observer(clean_up, {
+  context:start_request(make_observer(clean_up, {
     on_complete = function(status, response)
       if status == "cancelled" then
         logger:debug("request cancelled for visual selection, removing marks")
