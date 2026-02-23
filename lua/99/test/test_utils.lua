@@ -108,21 +108,39 @@ function M.create_file(contents, file_type, row, col)
   return bufnr
 end
 
+--- @param opts _99.Options | nil
+--- @param provider _99.Providers.BaseProvider
+--- @return _99.Options
+function M.get_test_setup_options(opts, provider)
+  opts = opts or {}
+  opts.provider = provider
+  opts.logger = {
+    error_cache_level = Levels.ERROR,
+    type = "print",
+  }
+  opts.in_flight_options = opts.in_flight_options
+    or {
+      throbber_opts = {
+        tick_time = 10,
+        throb_time = 1000,
+        cooldown_time = 500,
+      },
+      in_flight_interval = 10,
+      enable = true,
+    }
+  return opts
+end
+
 --- @param content string[]
 --- @param row number
 --- @param col number
 --- @param lang string?
+--- @param opts _99.Options | nil
 --- @return _99.test.Provider, number
-function M.test_setup(content, row, col, lang)
-  assert(lang, "lang must be provided")
+function M.test_setup(content, row, col, lang, opts)
+  lang = lang or "lua"
   local provider = M.TestProvider.new()
-  require("99").setup({
-    provider = provider,
-    logger = {
-      error_cache_level = Levels.ERROR,
-      type = "print",
-    },
-  })
+  require("99").setup(M.get_test_setup_options(opts, provider))
 
   local buffer = M.create_file(content, lang, row, col)
   return provider, buffer

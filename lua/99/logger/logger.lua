@@ -8,6 +8,7 @@ local logger_list = {}
 local max_requests_in_logger_cache = MAX_REQUEST_DEFAULT
 
 --- @class _99.Logger.Options
+--- @docs included
 --- @field level number?
 --- @field type? "print" | "void" | "file"
 --- @field path string?

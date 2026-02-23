@@ -3,12 +3,12 @@ local Level = require("99.logger.level")
 local ops = require("99.ops")
 local Languages = require("99.language")
 local Window = require("99.window")
+local show_in_flight_requests = require("99.window.in-flight")
 local Prompt = require("99.prompt")
 local State = require("99.state")
 local Extensions = require("99.extensions")
 local Agents = require("99.extensions.agents")
 local Providers = require("99.providers")
-local Throbber = require("99.ops.throbber")
 
 ---@param path_or_rule string | _99.Agents.Rule
 ---@return _99.Agents.Rule | string
@@ -38,20 +38,21 @@ local function process_opts(opts)
 end
 
 --- @class _99.Completion
+--- @docs included
 --- @field source "cmp" | "blink" | nil
 --- @field custom_rules string[]
 --- @field files _99.Files.Config?
 
 --- @class _99.Options
---- @field logger _99.Logger.Options?
---- @field model string?
---- @field show_in_flight_requests boolean?
---- @field md_files string[]?
---- @field provider _99.Providers.BaseProvider?
---- @field debug_log_prefix string?
+--- @docs base
+--- @field logger? _99.Logger.Options
+--- @field model? string
+--- @field in_flight_options? _99.InFlight.Opts
+--- @field md_files? string[]
+--- @field provider? _99.Providers.BaseProvider
 --- @field display_errors? boolean
 --- @field auto_add_skills? boolean
---- @field completion _99.Completion?
+--- @field completion? _99.Completion
 --- @field tmp_dir? string
 
 --- @type _99.State
@@ -282,64 +283,6 @@ function _99.__get_state()
   return _99_state
 end
 
-local function shut_down_in_flight_requests_window()
-  if _99_state.show_in_flight_requests_throbber then
-    _99_state.show_in_flight_requests_throbber:stop()
-  end
-
-  local win = _99_state.show_in_flight_requests_window
-  if win ~= nil then
-    Window.close(win)
-  end
-  _99_state.show_in_flight_requests_window = nil
-  _99_state.show_in_flight_requests_throbber = nil
-end
-
-local function show_in_flight_requests()
-  if _99_state.show_in_flight_requests == false then
-    return
-  end
-  vim.defer_fn(show_in_flight_requests, 1000)
-
-  Window.refresh_active_windows()
-  local current_win = _99_state.show_in_flight_requests_window
-  if current_win ~= nil and not Window.is_active_window(current_win) then
-    shut_down_in_flight_requests_window()
-  end
-
-  if Window.has_active_windows() or _99_state:active_request_count() == 0 then
-    return
-  end
-
-  if _99_state.show_in_flight_requests_window == nil then
-    local win = Window.status_window()
-    local throb = Throbber.new(function(throb)
-      local count = _99_state:active_request_count()
-      if count == 0 or not Window.valid(win) then
-        return shut_down_in_flight_requests_window()
-      end
-
-      --- @type string[]
-      local lines = {
-        throb .. " requests(" .. tostring(count) .. ") " .. throb,
-      }
-
-      for _, c in pairs(_99_state.__request_by_id) do
-        if c.state == "requesting" then
-          table.insert(lines, c.operation)
-        end
-      end
-
-      Window.resize(win, #lines[1], #lines)
-      vim.api.nvim_buf_set_lines(win.buf_id, 0, 1, false, lines)
-    end)
-    _99_state.show_in_flight_requests_window = win
-    _99_state.show_in_flight_requests_throbber = throb
-
-    throb:start()
-  end
-end
-
 --- @param opts _99.Options?
 function _99.setup(opts)
   opts = opts or {}
@@ -389,9 +332,7 @@ function _99.setup(opts)
   Extensions.init(_99_state)
   Extensions.capture_project_root()
 
-  if _99_state.show_in_flight_requests then
-    show_in_flight_requests()
-  end
+  show_in_flight_requests(_99_state, _99_state.in_flight_options)
 end
 
 --- @param md string

@@ -1,4 +1,6 @@
 local time = require("99.time")
+local Consts = require("99.consts")
+
 local throb_icons = {
   { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" },
   { "◐", "◓", "◑", "◒" },
@@ -55,10 +57,6 @@ local function ease_in_ease_out_cubic(percent)
   end
 end
 
-local throb_time = 1200
-local cooldown_time = 100
-local tick_time = 100
-
 --- @class _99.Throbber
 --- @field start_time number
 --- @field section_time number
@@ -72,16 +70,17 @@ Throbber.__index = Throbber
 --- @class _99.Throbber.Opts
 --- @field throb_time number
 --- @field cooldown_time number
+--- @field tick_time number
 
 --- @param cb fun(str: string): nil
 --- @param opts _99.Throbber.Opts?
 --- @return _99.Throbber
 function Throbber.new(cb, opts)
-  opts = opts
-    or {
-      throb_time = throb_time,
-      cooldown_time = cooldown_time,
-    }
+  opts = opts or {}
+  opts.throb_time = opts.throb_time or Consts.throbber_throb_time
+  opts.cooldown_time = opts.cooldown_time or Consts.throbber_cooldown_time
+  opts.tick_time = opts.tick_time or Consts.throbber_tick_time
+
   return setmetatable({
     state = "init",
     start_time = 0,
@@ -111,7 +110,7 @@ function Throbber:_run()
   self.cb(icon)
   vim.defer_fn(function()
     self:_run()
-  end, tick_time)
+  end, self.opts.tick_time)
 end
 
 function Throbber:start()

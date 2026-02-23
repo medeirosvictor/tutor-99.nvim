@@ -26,6 +26,7 @@ local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 --- @field config _99.window.Config
 --- @field win_id number
 --- @field buf_id number
+--- @field type "capture_input" | "status"
 
 --- @class _99.window.SplitWindow
 --- @field win number
@@ -366,6 +367,8 @@ function M.capture_input(name, opts)
   local config = create_centered_window()
   local win =
     create_floating_window(config, string.format(" 99 %s ", name), true)
+  win.type = "capture_input"
+
   set_defaul_win_options(win, "99-prompt")
   vim.api.nvim_set_current_win(win.win_id)
 
@@ -456,6 +459,7 @@ function M.status_window()
   M.clear_active_popups()
   local config = create_transparent_top_right_config(100, " 99 - Status ")
   local window = create_floating_window(config, " 99 - Status ", false)
+  window.type = "status"
   return window
 end
 
@@ -475,6 +479,18 @@ end
 --- @return boolean
 function M.has_active_windows()
   return #M.active_windows > 0
+end
+
+--- @return boolean
+function M.has_active_status_window()
+  local has = false
+  for _, w in ipairs(M.active_windows) do
+    if w.type == "status" then
+      has = true
+      break
+    end
+  end
+  return has
 end
 
 function M.refresh_active_windows()

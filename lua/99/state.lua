@@ -1,12 +1,15 @@
 local Agents = require("99.extensions.agents")
 local Extensions = require("99.extensions")
 
+local function default_completion()
+  return { source = nil, custom_rules = {} }
+end
+
 --- @class _99.StateProps
 --- @field model string
 --- @field md_files string[]
 --- @field prompts _99.Prompts
 --- @field ai_stdout_rows number
---- @field show_in_flight_requests boolean
 --- @field languages string[]
 --- @field display_errors boolean
 --- @field auto_add_skills boolean
@@ -24,7 +27,7 @@ local Extensions = require("99.extensions")
 --- @field ai_stdout_rows number
 --- @field languages string[]
 --- @field display_errors boolean
---- @field show_in_flight_requests boolean
+--- @field in_flight_options _99.InFlight.Opts | nil
 --- @field show_in_flight_requests_window _99.window.Window | nil
 --- @field show_in_flight_requests_throbber _99.Throbber | nil
 --- @field provider_override _99.Providers.BaseProvider?
@@ -45,7 +48,6 @@ local function create()
     md_files = {},
     prompts = require("99.prompt-settings"),
     ai_stdout_rows = 3,
-    show_in_flight_requests = false,
     languages = { "lua", "go", "java", "elixir", "cpp", "ruby" },
     display_errors = false,
     provider_override = nil,
@@ -63,13 +65,9 @@ function State.new(opts)
   local props = create()
   local _99_state = setmetatable(props, State) --[[@as _99.State]]
 
-  _99_state.show_in_flight_requests = opts.show_in_flight_requests or false
+  _99_state.in_flight_options = opts.in_flight_options or { enable = true }
   _99_state.provider_override = opts.provider
-  _99_state.completion = opts.completion
-    or {
-      source = nil,
-      custom_rules = {},
-    }
+  _99_state.completion = opts.completion or default_completion()
   _99_state.completion.custom_rules = _99_state.completion.custom_rules or {}
   _99_state.auto_add_skills = opts.auto_add_skills or false
   _99_state.completion.files = _99_state.completion.files or {}
