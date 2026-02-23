@@ -58,7 +58,145 @@ end
 --- @type _99.State
 local _99_state
 
+--- @alias _99.TraceID number
+
 --- @class _99
+--- 99 is an agentic workflow that is meant to meld the current programmers ability
+--- with the amazing powers of LLMs.  Instead of being a replacement, its meant to
+--- augment the programmer.
+---
+--- As of now, the direction of 99 is to progress into agentic programming and surfacing
+--- of information.  In the beginning and the original youtube video was about replacing
+--- specific pieces of code.  The more i use 99 the more i realize the better use is
+--- through `search` and `work`
+---
+--- ### Basic Setup
+--- ```lua
+--- 	{
+--- 		"ThePrimeagen/99",
+--- 		config = function()
+--- 			local _99 = require("99")
+---
+---             -- For logging that is to a file if you wish to trace through requests
+---             -- for reporting bugs, i would not rely on this, but instead the provided
+---             -- logging mechanisms within 99.  This is for more debugging purposes
+---             local cwd = vim.uv.cwd()
+---             local basename = vim.fs.basename(cwd)
+--- 			_99.setup({
+---                 -- provider = _99.Providers.ClaudeCodeProvider,  -- default: OpenCodeProvider
+--- 				logger = {
+--- 					level = _99.DEBUG,
+--- 					path = "/tmp/" .. basename .. ".99.debug",
+--- 					print_on_error = true,
+--- 				},
+---                 -- When setting this to something that is not inside the CWD tools
+---                 -- such as claude code or opencode will have permission issues
+---                 -- and generation will fail refer to tool documentation to resolve
+---                 -- https://opencode.ai/docs/permissions/#external-directories
+---                 -- https://code.claude.com/docs/en/permissions#read-and-edit
+---                 tmp_dir = "./tmp",
+---
+---                 --- Completions: #rules and @files in the prompt buffer
+---                 completion = {
+---                     -- I am going to disable these until i understand the
+---                     -- problem better.  Inside of cursor rules there is also
+---                     -- application rules, which means i need to apply these
+---                     -- differently
+---                     -- cursor_rules = "<custom path to cursor rules>"
+---
+---                     --- A list of folders where you have your own SKILL.md
+---                     --- Expected format:
+---                     --- /path/to/dir/<skill_name>/SKILL.md
+---                     ---
+---                     --- Example:
+---                     --- Input Path:
+---                     --- "scratch/custom_rules/"
+---                     ---
+---                     --- Output Rules:
+---                     --- {path = "scratch/custom_rules/vim/SKILL.md", name = "vim"},
+---                     --- ... the other rules in that dir ...
+---                     ---
+---                     custom_rules = {
+---                       "scratch/custom_rules/",
+---                     },
+---
+---                     --- Configure @file completion (all fields optional, sensible defaults)
+---                     files = {
+---                         -- enabled = true,
+---                         -- max_file_size = 102400,     -- bytes, skip files larger than this
+---                         -- max_files = 5000,            -- cap on total discovered files
+---                         -- exclude = { ".env", ".env.*", "node_modules", ".git", ... },
+---                     },
+---
+---                     --- What autocomplete you use.
+---                     source = "cmp" | "blink",
+---                 },
+---
+---                 --- WARNING: if you change cwd then this is likely broken
+---                 --- ill likely fix this in a later change
+---                 ---
+---                 --- md_files is a list of files to look for and auto add based on the location
+---                 --- of the originating request.  That means if you are at /foo/bar/baz.lua
+---                 --- the system will automagically look for:
+---                 --- /foo/bar/AGENT.md
+---                 --- /foo/AGENT.md
+---                 --- assuming that /foo is project root (based on cwd)
+--- 				md_files = {
+--- 					"AGENT.md",
+--- 				},
+--- 			})
+---
+---             -- take extra note that i have visual selection only in v mode
+---             -- technically whatever your last visual selection is, will be used
+---             -- so i have this set to visual mode so i dont screw up and use an
+---             -- old visual selection
+---             --
+---             -- likely ill add a mode check and assert on required visual mode
+---             -- so just prepare for it now
+--- 			vim.keymap.set("v", "<leader>9v", function()
+--- 				_99.visual()
+--- 			end)
+---
+---             --- if you have a request you dont want to make any changes, just cancel it
+--- 			vim.keymap.set("n", "<leader>9x", function()
+--- 				_99.stop_all_requests()
+--- 			end)
+---
+--- 			vim.keymap.set("n", "<leader>9s", function()
+--- 				_99.search()
+--- 			end)
+--- 		end,
+--- 	},
+--- ```
+---
+--- ### Usage
+--- I would highly recommend trying out `search` as its the direction the library is going
+---
+--- ```lua
+--- _99.search()
+--- ```
+---
+--- See search for more details
+---
+--- @docs base
+--- @field setup fun(opts?: _99.Options): nil
+--- Sets up _99.  Must be called for this library to work.  This is how we setup
+--- in flight request spinners, set default values, get completion to work the
+--- way you want it to.
+--- @field search fun(opts: _99.ops.SearchOpts): _99.TraceID
+--- Performs a search across your project with the prompt you provide and return out a list of
+--- locations with notes that will be put into your quick fix list.
+--- @field visual fun(opts: _99.ops.Opts): _99.TraceID
+--- takes your current selection and sends that along with the prompt provided and replaces
+--- your visual selection with the results
+--- @field view_logs fun(): nil
+--- views the most recent logs and setups the machine to view older and new logs
+--- this is still pretty rough and will change in the near future
+--- @field stop_all_requests fun(): nil
+--- stops all in flight requests.  this means that the underlying process will
+--- be killed (OpenCode) and any result will be discared
+--- @field clear_previous_requests fun(): nil
+--- clears all previous search and visual operations
 local _99 = {
   DEBUG = Level.DEBUG,
   INFO = Level.INFO,
@@ -174,7 +312,7 @@ function _99:rule_from_path(path)
 end
 
 --- @param opts? _99.ops.SearchOpts
---- @return number
+--- @return _99.TraceID
 function _99.search(opts)
   local o = process_opts(opts) --[[ @as _99.ops.SearchOpts ]]
   local context = Prompt.search(_99_state)
@@ -198,6 +336,7 @@ function _99.tutorial(opts)
 end
 
 --- @param opts _99.ops.Opts?
+--- @return _99.TraceID
 function _99.visual(opts)
   opts = process_opts(opts)
   local context = Prompt.visual(_99_state)
@@ -206,6 +345,7 @@ function _99.visual(opts)
   else
     capture_prompt(ops.over_range, "Visual", context, opts)
   end
+  return context.xid
 end
 
 --- View all the logs that are currently cached.  Cached log count is determined

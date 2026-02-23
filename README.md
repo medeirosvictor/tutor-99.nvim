@@ -1,41 +1,36 @@
-# IF YOU ARE HERE FROM [THE YT VIDEO](https://www.youtube.com/watch?v=ws9zR-UzwTE)
-a few things changed.  completion is a bit different for skills.  i now require `#` to begin with
-... ill try to update as it happens ...
-
-# WARNING :: API CHANGES RIGHT NOW
-It will happen that apis will disapear or be changed.  Sorry, this is an ALPHA product.
-
 # 99
 The AI client that Neovim deserves, built by those that still enjoy to code.
 
-# API
-* visual implementation
-* search
-* debug
-* Extensions.Worker.work
+## IF YOU ARE HERE FROM [THE YT VIDEO](https://www.youtube.com/watch?v=ws9zR-UzwTE)
+So many things have changed.  So please be careful!
 
-## The AI Agent That Neovim Deserves
+## WARNING :: API CHANGES RIGHT NOW
+It will happen that apis will disapear or be changed.  Sorry, this is an BETA product.
 
+## Project Direction
 This repo is meant to be my exploration grounds for using AI mixed with tradcoding.
 
 I believe that hand coding is still very important and the best products i know
 of today still do that (see opencode vs claude code)
 
 ## Warning
-
 1. Prompts are temporary right now. they could be massively improved
 2. Officially in beta, but api can still change.  unlikely at this point
 
-## How to use
+# 99
+The AI Neovim experience
 
-**you must have a supported AI CLI installed (opencode, claude, or cursor-agent — see [Providers](#providers) below)**
-Opencode is preferred, but dax sucks.  so... dont forget that.
-I also hear that Dax is the best DevRel / CEO ever
+## _99
+99 is an agentic workflow that is meant to meld the current programmers ability
+with the amazing powers of LLMs.  Instead of being a replacement, its meant to
+augment the programmer.
 
-Add the following configuration to your neovim config
+As of now, the direction of 99 is to progress into agentic programming and surfacing
+of information.  In the beginning and the original youtube video was about replacing
+specific pieces of code.  The more i use 99 the more i realize the better use is
+through `search` and `work`
 
-I make the assumption you are using Lazy
-
+### Basic Setup
 ```lua
 	{
 		"ThePrimeagen/99",
@@ -134,6 +129,237 @@ I make the assumption you are using Lazy
 	},
 ```
 
+### Usage
+I would highly recommend trying out `search` as its the direction the library is going
+
+```lua
+_99.search()
+```
+
+See search for more details
+
+### Description
+| Name | Type | Default Value |
+| --- | --- | --- |
+| `setup` | `fun(opts?: _99.Options): nil` | - |
+| `search` | `fun(opts: _99.ops.SearchOpts): _99.TraceID` | - |
+| `visual` | `fun(opts: _99.ops.Opts): _99.TraceID` | - |
+| `view_logs` | `fun(): nil` | - |
+| `stop_all_requests` | `fun(): nil` | - |
+| `clear_previous_requests` | `fun(): nil` | - |
+
+### API
+
+#### setup
+Sets up _99.  Must be called for this library to work.  This is how we setup
+in flight request spinners, set default values, get completion to work the
+way you want it to.
+
+#### search
+Performs a search across your project with the prompt you provide and return out a list of
+locations with notes that will be put into your quick fix list.
+
+#### visual
+takes your current selection and sends that along with the prompt provided and replaces
+your visual selection with the results
+
+#### view_logs
+views the most recent logs and setups the machine to view older and new logs
+this is still pretty rough and will change in the near future
+
+#### stop_all_requests
+stops all in flight requests.  this means that the underlying process will
+be killed (OpenCode) and any result will be discared
+
+#### clear_previous_requests
+clears all previous search and visual operations
+
+## _99.Options
+No description.
+
+### Description
+| Name | Type | Default Value |
+| --- | --- | --- |
+| `logger` | `_99.Logger.Options \| nil` | - |
+| `model` | `string \| nil` | - |
+| `in_flight_options` | `_99.InFlight.Opts \| nil` | - |
+| `md_files` | `string[] \| nil` | - |
+| `provider` | `_99.Providers.BaseProvider \| nil` | - |
+| `display_errors` | `boolean \| nil` | - |
+| `auto_add_skills` | `boolean \| nil` | - |
+| `completion` | `_99.Completion \| nil` | - |
+| `tmp_dir` | `string \| nil` | - |
+
+### API
+
+#### logger
+No description.
+
+#### model
+No description.
+
+#### in_flight_options
+No description.
+
+#### md_files
+No description.
+
+#### provider
+No description.
+
+#### display_errors
+No description.
+
+#### auto_add_skills
+No description.
+
+#### completion
+No description.
+
+#### tmp_dir
+No description.
+
+## _99.ops.Opts
+The options that are used throughout all the interations with 99.  This
+includes search, visual, and others
+
+### Description
+| Name | Type | Default Value |
+| --- | --- | --- |
+| `additional_prompt` | `string \| nil` | - |
+| `additional_rules` | `_99.Agents.Rule[] \| nil` | - |
+
+### API
+
+#### additional_prompt
+by providing `additional_prompt` you will not be required to provide a prompt.
+this allows you to define actions based on remaps
+
+```lua
+remap("n", "<leader>9d", function()
+  --- this function could be used to auto debug your project
+  _99.search({
+    additional_prompt = [[
+run `make test` and debug the test failures and provide me a comprehensive set of steps where
+the tests are breaking ]]
+  })
+end)
+```
+
+This would kick off a search job that will run your tests in the background.
+the resulting failures would be diagnosed and search results would be transfered
+into a quick fix list.
+
+#### additional_rules
+can be used to provide extra args.  If you have a skill called "cloudflare" you could
+provide the rule for cloudflare and its context will be injected into your request
+
+## _99.ops.SearchOpts
+See `_99.opts.Opts` for more information.
+
+There are no properties yet.  But i would like to tweek some behavior based on opts
+
+### Description
+| Name | Type | Default Value |
+| --- | --- | --- |
+| - | - | - |
+
+### API
+No properties.
+
+## _99.Completion
+No description.
+
+### Description
+| Name | Type | Default Value |
+| --- | --- | --- |
+| `source` | `"cmp" \| "blink" \| nil` | - |
+| `custom_rules` | `string[]` | - |
+| `files` | `_99.Files.Config?` | - |
+
+### API
+
+#### source
+No description.
+
+#### custom_rules
+No description.
+
+#### files
+No description.
+
+## _99.InFlight.Opts
+this is pure a class for testing.   helps controls timings
+
+### Description
+| Name | Type | Default Value |
+| --- | --- | --- |
+| `throbber_opts` | `_99.Throbber.Opts \| nil` | - |
+| `in_flight_interval` | `number \| nil` | - |
+| `enable` | `boolean \| nil` | - |
+
+### API
+
+#### throbber_opts
+options for the throbber in the top left
+
+#### in_flight_interval
+frequency in which the in-flight interval checks to see if it should be
+displayed / removed
+
+#### enable
+defaults to true
+
+## _99.Logger.Options
+No description.
+
+### Description
+| Name | Type | Default Value |
+| --- | --- | --- |
+| `level` | `number?` | - |
+| `type` | `"print" \| "void" \| "file" \| nil` | - |
+| `path` | `string?` | - |
+| `print_on_error` | `boolean \| nil` | - |
+| `max_requests_cached` | `number \| nil` | - |
+
+### API
+
+#### level
+No description.
+
+#### type
+No description.
+
+#### path
+No description.
+
+#### print_on_error
+No description.
+
+#### max_requests_cached
+No description.
+
+## _99.Agents.Rule
+No description.
+
+### Description
+| Name | Type | Default Value |
+| --- | --- | --- |
+| `name` | `string` | - |
+| `path` | `string` | - |
+| `absolute_path` | `string?` | - |
+
+### API
+
+#### name
+No description.
+
+#### path
+No description.
+
+#### absolute_path
+No description.
+
 ## Completions
 
 When prompting, you can reference rules and files to add context to your request.
@@ -208,46 +434,9 @@ Please do not request features. We will hold a public discussion on Twitch about
 features, which will be a much better jumping point then a bunch of requests that i have to close down. If you do make a feature request ill just shut it down instantly.
 
 ### The logs
-
-To get the _last_ run's logs execute `:lua require("99").view_logs()`. If this happens to not be the log, you can navigate the logs with:
-
-```lua
-function _99.prev_request_logs() ... end
-function _99.next_request_logs() ... end
-```
+To get the _last_ run's logs execute `:lua require("99").view_logs()`.
 
 ### Dont forget
+If there are secrets or other information in the logs you want to be removed make
+sure that you delete the `query` printing. This will likely contain information you may not want to share.
 
-If there are secrets or other information in the logs you want to be removed make sure that you delete the `query` printing. This will likely contain information you may not want to share.
-
-### Known usability issues
-
-- long function definition issues.
-
-```typescript
-function display_text(
-  game_state: GameState,
-  text: string,
-  x: number,
-  y: number,
-): void {
-  const ctx = game_state.canvas.getContext("2d");
-  assert(ctx, "cannot get game context");
-  ctx.fillStyle = "white";
-  ctx.fillText(text, x, y);
-}
-```
-
-Then the virtual text will be displayed one line below "function" instead of first line in body
-
-- in lua and likely jsdoc, the replacing function will duplicate comment definitions
-  - this wont happen in languages with types in the syntax
-
-- visual selection sends the whole file. there is likely a better way to use
-  treesitter to make the selection of the content being sent more sensible.
-
-* every now and then the replacement seems to get jacked up and it screws up
-what i am currently editing..  I think it may have something to do with auto-complete
-  * definitely not suure on this one
-
-- export function ... sometimes gets export as well. I think the prompt could help prevent this

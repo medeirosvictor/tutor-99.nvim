@@ -2,6 +2,7 @@ local helpers = require("99.extensions.agents.helpers")
 local M = {}
 
 --- @class _99.Agents.Rule
+--- @docs included
 --- @field name string
 --- @field path string
 --- @field absolute_path string?
