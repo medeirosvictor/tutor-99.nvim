@@ -160,7 +160,7 @@ end
 
 --- @return string
 function OpenCodeProvider._get_default_model()
-  return "opencode/claude-sonnet-4-5"
+  return "minimax/MiniMax-M2"
 end
 
 function OpenCodeProvider.fetch_models(callback)

@@ -165,4 +165,21 @@ describe("visual", function()
     -- Buffer should remain unchanged on cancellation
     eq(content, r(buffer))
   end)
+
+  it("should handle empty response gracefully", function()
+    local p, buffer, range = setup(content, 2, 1, 2, 23)
+    local state = _99.__get_state()
+    local context = Prompt.visual(state)
+
+    visual_call_with_range(context, range)
+
+    eq(content, r(buffer))
+
+    -- Resolve with empty response
+    p:resolve("success", "")
+    test_utils.next_frame()
+
+    -- Buffer should remain unchanged on empty response
+    eq(content, r(buffer))
+  end)
 end)

@@ -44,7 +44,7 @@ State.__index = State
 --- @return _99.StateProps
 local function create()
   return {
-    model = "opencode/claude-sonnet-4-5",
+    model = "minimax/MiniMax-M2",
     md_files = {},
     prompts = require("99.prompt-settings"),
     ai_stdout_rows = 3,
