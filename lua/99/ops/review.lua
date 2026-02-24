@@ -16,7 +16,7 @@ local function review(context, opts)
   opts = opts or {}
   local logger = context.logger:set_area("review")
 
-  local data = context:visual_data()
+  local data = context:review_data()
   local range = data.range
   local top_mark = Mark.mark_above_range(range)
   local bottom_mark = Mark.mark_point(range.buffer, range.end_)
