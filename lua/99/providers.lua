@@ -191,6 +191,8 @@ function ClaudeCodeProvider._build_command(_, query, context)
     "--model",
     context.model,
     "--print",
+    "--output",
+    context.tmp_file,
     query,
   }
 end

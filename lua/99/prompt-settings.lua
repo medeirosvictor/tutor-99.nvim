@@ -127,20 +127,22 @@ Consider the context of the selection and the project goals (see DEV-PLAN.md in 
 %s
 </FILE_CONTAINING_SELECTION>
 <MustObey>
-%s
-%s
+NEVER alter any file other than TEMP_FILE.
+never provide the requested changes as conversational output. Return only the code.
+ONLY provide requested changes by writing the change to TEMP_FILE
+never attempt to read TEMP_FILE.
+It is purely for output.
+Previous contents, which may not exist, can be written over without worry
+After writing TEMP_FILE once you should be done.  Be done and end the session.
 </MustObey>
-<TEMP_FILE>%s</TEMP_FILE>
+<TEMP_FILE>TEMP_FILE_PLACEHOLDER</TEMP_FILE>
 
 Provide your review in a helpful, educational manner. End with an invitation for discussion.
 Write your response to TEMP_FILE when complete.
 ]],
       range:to_string(),
       range:to_text(),
-      get_file_contents(range.buffer),
-      prompts.output_file(),
-      prompts.read_tmp(),
-      "TEMP_FILE_PLACEHOLDER"
+      get_file_contents(range.buffer)
     )
   end,
   -- luacheck: ignore 631
