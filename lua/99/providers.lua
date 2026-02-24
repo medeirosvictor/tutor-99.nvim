@@ -144,12 +144,14 @@ local OpenCodeProvider = setmetatable({}, { __index = BaseProvider })
 --- @param context _99.Prompt
 --- @return string[]
 function OpenCodeProvider._build_command(_, query, context)
-  -- Use cmd /c to redirect output to temp file on Windows
-  local output_redirect = "> \"" .. context.tmp_file .. "\""
+  -- Use PowerShell to redirect output to temp file on Windows
+  local escaped_query = vim.fn.shellescape(query)
+  local ps_command = "opencode run --agent build -m " .. context.model .. " " .. escaped_query .. " | Out-File -FilePath '" .. context.tmp_file .. "' -Encoding UTF8"
   return {
-    "cmd",
-    "/c",
-    "opencode run --agent build -m " .. context.model .. " " .. vim.fn.shellescape(query) .. " " .. output_redirect,
+    "powershell",
+    "-NoProfile",
+    "-Command",
+    ps_command,
   }
 end
 
@@ -183,12 +185,13 @@ local ClaudeCodeProvider = setmetatable({}, { __index = BaseProvider })
 --- @param context _99.Prompt
 --- @return string[]
 function ClaudeCodeProvider._build_command(_, query, context)
-  -- Use cmd /c to redirect output to temp file on Windows
-  local output_redirect = "> \"" .. context.tmp_file .. "\""
   return {
-    "cmd",
-    "/c",
-    "claude --dangerously-skip-permissions --model " .. context.model .. " -p " .. vim.fn.shellescape(query) .. " " .. output_redirect,
+    "claude",
+    "--dangerously-skip-permissions",
+    "--model",
+    context.model,
+    "--print",
+    query,
   }
 end
 
