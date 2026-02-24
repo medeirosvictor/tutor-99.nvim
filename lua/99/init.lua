@@ -361,11 +361,9 @@ end
 function _99.review(opts)
   opts = process_opts(opts)
   local context = Prompt.review(_99_state)
-  if opts.additional_prompt then
-    ops.review(context, opts)
-  else
-    capture_prompt(ops.review, "Review", context, opts)
-  end
+  -- Review automatically uses a default prompt - no need to ask user
+  opts.additional_prompt = "Please review the selected code and provide constructive feedback. Consider the project goals in DEV-PLAN.md and user preferences in preferences.md."
+  ops.review(context, opts)
   return context.xid
 end
 

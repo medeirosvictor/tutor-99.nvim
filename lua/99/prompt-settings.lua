@@ -126,12 +126,21 @@ Consider the context of the selection and the project goals (see DEV-PLAN.md in 
 <FILE_CONTAINING_SELECTION>
 %s
 </FILE_CONTAINING_SELECTION>
+<MustObey>
+%s
+%s
+</MustObey>
+<TEMP_FILE>%s</TEMP_FILE>
 
 Provide your review in a helpful, educational manner. End with an invitation for discussion.
+Write your response to TEMP_FILE when complete.
 ]],
       range:to_string(),
       range:to_text(),
-      get_file_contents(range.buffer)
+      get_file_contents(range.buffer),
+      prompts.output_file(),
+      prompts.read_tmp(),
+      "TEMP_FILE_PLACEHOLDER"
     )
   end,
   -- luacheck: ignore 631
