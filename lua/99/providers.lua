@@ -144,14 +144,12 @@ local OpenCodeProvider = setmetatable({}, { __index = BaseProvider })
 --- @param context _99.Prompt
 --- @return string[]
 function OpenCodeProvider._build_command(_, query, context)
-  -- Use PowerShell to redirect output to temp file on Windows
+  -- Use cmd with redirection
   local escaped_query = vim.fn.shellescape(query)
-  local ps_command = "opencode run --agent build -m " .. context.model .. " " .. escaped_query .. " | Out-File -FilePath '" .. context.tmp_file .. "' -Encoding UTF8"
   return {
-    "powershell",
-    "-NoProfile",
-    "-Command",
-    ps_command,
+    "cmd",
+    "/c",
+    "opencode run --agent build -m " .. context.model .. " " .. escaped_query .. " > " .. '"' .. context.tmp_file .. '"',
   }
 end
 
