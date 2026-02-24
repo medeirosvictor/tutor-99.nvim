@@ -157,6 +157,11 @@ local _99_state
 --- 				_99.visual()
 --- 			end)
 ---
+---             --- visual mode: review selected code with senior dev feedback
+--- 			vim.keymap.set("v", "<leader>9r", function()
+--- 				_99.review()
+--- 			end)
+---
 ---             --- if you have a request you dont want to make any changes, just cancel it
 --- 			vim.keymap.set("n", "<leader>9x", function()
 --- 				_99.stop_all_requests()
@@ -189,6 +194,9 @@ local _99_state
 --- @field visual fun(opts: _99.ops.Opts): _99.TraceID
 --- takes your current selection and sends that along with the prompt provided and replaces
 --- your visual selection with the results
+--- @field review fun(opts: _99.ops.Opts): _99.TraceID
+--- takes your current selection and sends it for review. Returns feedback in a floating window
+--- (does not replace code). Great for getting senior dev feedback on selected code.
 --- @field view_logs fun(): nil
 --- views the most recent logs and setups the machine to view older and new logs
 --- this is still pretty rough and will change in the near future
@@ -344,6 +352,19 @@ function _99.visual(opts)
     ops.over_range(context, opts)
   else
     capture_prompt(ops.over_range, "Visual", context, opts)
+  end
+  return context.xid
+end
+
+--- @param opts _99.ops.Opts?
+--- @return _99.TraceID
+function _99.review(opts)
+  opts = process_opts(opts)
+  local context = Prompt.review(_99_state)
+  if opts.additional_prompt then
+    ops.review(context, opts)
+  else
+    capture_prompt(ops.review, "Review", context, opts)
   end
   return context.xid
 end

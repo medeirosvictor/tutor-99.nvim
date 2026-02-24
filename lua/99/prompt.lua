@@ -21,8 +21,8 @@ local filetype_map = {
 }
 
 -- luacheck: ignore
---- @alias _99.Prompt.Data _99.Prompt.Data.Search | _99.Prompt.Data.Tutorial | _99.Prompt.Data.Visual
---- @alias _99.Prompt.Operation "visual" | "tutorial" | "search"
+--- @alias _99.Prompt.Data _99.Prompt.Data.Search | _99.Prompt.Data.Tutorial | _99.Prompt.Data.Visual | _99.Prompt.Data.Review
+--- @alias _99.Prompt.Operation "visual" | "tutorial" | "search" | "review"
 --- @alias _99.Prompt.EndingState "failed" | "success" | "cancelled"
 --- @alias _99.Prompt.State "ready" | "requesting" | _99.Prompt.EndingState
 --- @alias _99.Prompt.Cleanup fun(): nil
@@ -33,6 +33,12 @@ local filetype_map = {
 
 --- @class _99.Prompt.Data.Visual
 --- @field type "visual"
+--- @field buffer number
+--- @field file_type string
+--- @field range _99.Range
+
+--- @class _99.Prompt.Data.Review
+--- @field type "review"
 --- @field buffer number
 --- @field file_type string
 --- @field range _99.Range
@@ -173,6 +179,38 @@ function Prompt.search(_99)
   return context
 end
 
+--- @param _99 _99.State
+--- @return _99.Prompt
+function Prompt.review(_99)
+  _99:refresh_rules()
+
+  set_selection_marks()
+  local range = Range.from_visual_selection()
+
+  local file_type = vim.bo[0].ft
+  local buffer = vim.api.nvim_get_current_buf()
+  file_type = filetype_map[file_type] or file_type
+
+  local mds = {}
+  for _, md in ipairs(_99.md_files) do
+    table.insert(mds, md)
+  end
+
+  --- @type _99.Prompt
+  local context = setmetatable({}, Prompt)
+  set_defaults(context, _99)
+  context.operation = "review"
+  context.data = {
+    type = "review",
+    buffer = buffer,
+    file_type = file_type,
+    range = range,
+  }
+  context.logger:debug("99 Request", "method", "review")
+
+  return context
+end
+
 --- @param obs _99.Providers.Observer | nil
 function Prompt:_observer(obs)
   return {
@@ -206,7 +244,7 @@ end
 --- @return boolean
 function Prompt:valid()
   local t = self.data.type
-  return t == "visual" or t == "search" or t == "tutorial"
+  return t == "visual" or t == "search" or t == "tutorial" or t == "review"
 end
 
 --- @param observer _99.Providers.Observer?
@@ -287,6 +325,15 @@ function Prompt:search_data()
     "you cannot get search data if its not type search"
   )
   return self.data --[[@as _99.Prompt.Data.Search]]
+end
+
+--- @return _99.Prompt.Data.Visual
+function Prompt:review_data()
+  assert(
+    self.data.type == "review",
+    "you cannot get review data if its not type review"
+  )
+  return self.data --[[@as _99.Prompt.Data.Visual]]
 end
 
 function Prompt:stop()
@@ -402,6 +449,9 @@ function Prompt:finalize()
   self:_read_md_files()
 
   local ok, visual_data = pcall(self.visual_data, self)
+  if not ok then
+    ok, visual_data = pcall(self.review_data, self)
+  end
   if ok then
     local f_loc =
       self._99.prompts.get_file_location(self.full_path, visual_data.range)

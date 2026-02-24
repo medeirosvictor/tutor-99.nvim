@@ -7,6 +7,7 @@ end
 
 --- @class _99.Prompts.SpecificOperations
 --- @field visual_selection fun(range: _99.Range): string
+--- @field review_selection fun(range: _99.Range): string
 --- @field semantic_search fun(): string
 --- @field tutorial fun(): string
 --- @field prompt fun(prompt: string, action: string, name?: string): string
@@ -89,7 +90,7 @@ ONLY provide requested changes by writing the change to TEMP_FILE
       action
     )
   end,
-  visual_selection = function(range)
+visual_selection = function(range)
     return string.format(
       [[
 You receive a selection in neovim that you need to replace with new code.
@@ -104,6 +105,29 @@ consider the context of the selection and what you are suppose to be implementin
 <FILE_CONTAINING_SELECTION>
 %s
 </FILE_CONTAINING_SELECTION>
+]],
+      range:to_string(),
+      range:to_text(),
+      get_file_contents(range.buffer)
+    )
+  end,
+  review_selection = function(range)
+    return string.format(
+      [[
+You receive a selection of code in neovim that you need to review.
+Provide constructive feedback to help the developer improve their code.
+Consider the context of the selection and the project goals (see DEV-PLAN.md in context).
+<SELECTION_LOCATION>
+%s
+</SELECTION_LOCATION>
+<SELECTION_CONTENT>
+%s
+</SELECTION_CONTENT>
+<FILE_CONTAINING_SELECTION>
+%s
+</FILE_CONTAINING_SELECTION>
+
+Provide your review in a helpful, educational manner. End with an invitation for discussion.
 ]],
       range:to_string(),
       range:to_text(),

@@ -35,4 +35,5 @@ return {
   search = require("99.ops.search"),
   tutorial = require("99.ops.tutorial"),
   over_range = require("99.ops.over-range"),
+  review = require("99.ops.review"),
 }
